@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -35,14 +37,27 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String email) {
         authService.requestPasswordReset(email);
-        return ResponseEntity.ok("If an account with that email exists, a password reset link has been sent.");
+        return ResponseEntity.ok(Map.of("message", "If an account with that email exists, a password reset link has been sent."));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
-        return ResponseEntity.ok("Password has been reset successfully. You can now log in with your new password.");
+        return ResponseEntity.ok(Map.of("message", "Password has been reset successfully. You can now log in with your new password."));
     }
+
+
+//    @PostMapping("/forgot-password")
+//    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+//        authService.requestPasswordReset(email);
+//        return ResponseEntity.ok("If an account with that email exists, a password reset link has been sent.");
+//    }
+//
+//    @PostMapping("/reset-password")
+//    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+//        authService.resetPassword(request);
+//        return ResponseEntity.ok("Password has been reset successfully. You can now log in with your new password.");
+//    }
 }

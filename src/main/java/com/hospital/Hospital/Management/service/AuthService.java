@@ -14,6 +14,7 @@ import com.hospital.Hospital.Management.repository.UserRepository;
 import com.hospital.Hospital.Management.repository.VerificationTokenRepository;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -88,7 +90,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void verifyEmail(String token) {
+    public ResponseEntity<Map<String, String>> verifyEmail(String token) {
         VerificationToken verificationToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new InvalidTokenException("Invalid verification token"));
 
@@ -110,10 +112,12 @@ public class AuthService {
 
         verificationToken.setUsed(true);
         tokenRepository.save(verificationToken);
+//for json message
+        return ResponseEntity.ok(Map.of("message", "Email successfully verified. You can now log in."));
     }
 
     @Transactional
-    public void requestPasswordReset(String email) {
+    public ResponseEntity<Map<String, String>> requestPasswordReset(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
 
@@ -134,6 +138,8 @@ public class AuthService {
         } catch (MessagingException e) {
             System.err.println("Failed to send password reset email: " + e.getMessage());
         }
+//for json message instead of void i used Response entity and returned it
+        return ResponseEntity.ok(Map.of("message", "Password reset link has been sent to your email"));
     }
 
     @Transactional
