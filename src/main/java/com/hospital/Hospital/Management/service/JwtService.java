@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@Slf4j
 public class JwtService {
 
     @Value("${app.jwt.secret}")
@@ -28,15 +30,18 @@ public class JwtService {
     private long refreshExpiration;
 
     public String extractUsername(String token) {
+        log.debug("Extracting username from token");
         return extractClaim(token, Claims::getSubject);
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        log.debug("Extracting claim from token");
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
     public String generateToken(UserDetails userDetails) {
+        log.info("Generating access token for user: {}", userDetails.getUsername());
         return generateToken(new HashMap<>(), userDetails);
     }
 
@@ -45,6 +50,7 @@ public class JwtService {
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
+        log.info("Generating refresh token for user: {}", userDetails.getUsername());
         return buildToken(new HashMap<>(), userDetails, refreshExpiration);
     }
 
@@ -53,6 +59,7 @@ public class JwtService {
             UserDetails userDetails,
             long expiration
     ) {
+        log.debug("Building token for user: {}", userDetails.getUsername());
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
@@ -76,6 +83,7 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String token) {
+        log.debug("Extracting all claims from token");
         return Jwts.parserBuilder()
                 .setSigningKey(getSignInKey())
                 .build()
@@ -84,6 +92,7 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
+        log.debug("Decoding secret key for signing");
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }

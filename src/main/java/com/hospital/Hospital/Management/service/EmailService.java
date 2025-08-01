@@ -3,6 +3,10 @@ package com.hospital.Hospital.Management.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -12,6 +16,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class EmailService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
     private final JavaMailSender mailSender;
 
@@ -23,6 +29,7 @@ public class EmailService {
 
     @Async
     public void sendVerificationEmail(String to, String token) throws MessagingException {
+        logger.info("Preparing verification email for: {}", to);
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         
@@ -67,10 +74,13 @@ public class EmailService {
         
         helper.setText(htmlContent, true);
         mailSender.send(message);
+
+        logger.info("Verification email sent to: {}", to);
     }
 
     @Async
     public void sendPasswordResetEmail(String to, String token) throws MessagingException {
+        logger.info("Preparing password reset email for: {}", to);
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         
@@ -115,5 +125,9 @@ public class EmailService {
         
         helper.setText(htmlContent, true);
         mailSender.send(message);
+
+
+        logger.info("Password reset email sent to: {}", to);
+
     }
 }

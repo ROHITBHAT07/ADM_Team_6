@@ -14,6 +14,11 @@ import com.hospital.Hospital.Management.repository.UserRepository;
 import com.hospital.Hospital.Management.repository.VerificationTokenRepository;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+
+//Logger
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +37,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+
     private final UserRepository userRepository;
     private final VerificationTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -41,8 +48,10 @@ public class AuthService {
 
     @Transactional
     public void register(RegisterRequest request) {
+        logger.info("Attempting to register user with email: {}", request.getEmail());
         // Check if user already exists
         if (userRepository.existsByEmail(request.getEmail())) {
+            logger.warn("Registration failed: user with email {} already exists", request.getEmail());
             throw new UserAlreadyExistsException("User with email " + request.getEmail() + " already exists");
         }
 
@@ -56,14 +65,17 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        logger.info("User registered successfully: {}", savedUser.getEmail());
 
         // Create verification token
         VerificationToken verificationToken = VerificationToken.generateToken(savedUser, TokenType.EMAIL_VERIFICATION);
         tokenRepository.save(verificationToken);
+        logger.info("Verification token generated for user: {}", savedUser.getEmail());
 
         // Send verification email
         try {
             emailService.sendVerificationEmail(savedUser.getEmail(), verificationToken.getToken());
+            logger.info("Verification email sent to: {}", savedUser.getEmail());
         } catch (MessagingException e) {
             // Log error and continue. User can request a new verification token.
             System.err.println("Failed to send verification email: " + e.getMessage());
@@ -72,6 +84,7 @@ public class AuthService {
 
     @Transactional
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        logger.info("Authenticating user with email: {}", request.getEmail());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -83,6 +96,8 @@ public class AuthService {
         String jwt = jwtService.generateToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
+        logger.info("Authentication successful for user: {}", userDetails.getUsername());
+
         return AuthenticationResponse.builder()
                 .accessToken(jwt)
                 .refreshToken(refreshToken)
@@ -91,18 +106,22 @@ public class AuthService {
 
     @Transactional
     public ResponseEntity<Map<String, String>> verifyEmail(String token) {
+        logger.info("Verifying email with token: {}", token);
         VerificationToken verificationToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new InvalidTokenException("Invalid verification token"));
 
         if (verificationToken.isExpired()) {
+            logger.warn("Verification token expired for user: {}", verificationToken.getUser().getEmail());
             throw new InvalidTokenException("Token expired");
         }
 
         if (verificationToken.isUsed()) {
+            logger.warn("Verification token already used for user: {}", verificationToken.getUser().getEmail());
             throw new InvalidTokenException("Token already used");
         }
 
         if (verificationToken.getTokenType() != TokenType.EMAIL_VERIFICATION) {
+            logger.warn("Invalid token type for verification: {}", token);
             throw new InvalidTokenException("Invalid token type");
         }
 
@@ -112,12 +131,15 @@ public class AuthService {
 
         verificationToken.setUsed(true);
         tokenRepository.save(verificationToken);
+
+        logger.info("Email verified successfully for user: {}", user.getEmail());
 //for json message
         return ResponseEntity.ok(Map.of("message", "Email successfully verified. You can now log in."));
     }
 
     @Transactional
     public ResponseEntity<Map<String, String>> requestPasswordReset(String email) {
+        logger.info("Password reset requested for email: {}", email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
 
@@ -126,15 +148,18 @@ public class AuthService {
         existingToken.ifPresent(token -> {
             token.setUsed(true);
             tokenRepository.save(token);
+            logger.info("Existing password reset token invalidated for user: {}", user.getEmail());
         });
 
         // Create new password reset token
         VerificationToken resetToken = VerificationToken.generateToken(user, TokenType.PASSWORD_RESET);
         tokenRepository.save(resetToken);
+        logger.info("New password reset token generated for user: {}", user.getEmail());
 
         // Send password reset email
         try {
             emailService.sendPasswordResetEmail(user.getEmail(), resetToken.getToken());
+            logger.info("Password reset email sent to: {}", user.getEmail());
         } catch (MessagingException e) {
             System.err.println("Failed to send password reset email: " + e.getMessage());
         }
@@ -144,18 +169,22 @@ public class AuthService {
 
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
+        logger.info("Resetting password using token: {}", request.getToken());
         VerificationToken resetToken = tokenRepository.findByToken(request.getToken())
                 .orElseThrow(() -> new InvalidTokenException("Invalid reset token"));
 
         if (resetToken.isExpired()) {
+            logger.warn("Reset token expired for user: {}", resetToken.getUser().getEmail());
             throw new InvalidTokenException("Token expired");
         }
 
         if (resetToken.isUsed()) {
+            logger.warn("Reset token already used for user: {}", resetToken.getUser().getEmail());
             throw new InvalidTokenException("Token already used");
         }
 
         if (resetToken.getTokenType() != TokenType.PASSWORD_RESET) {
+            logger.warn("Invalid token type for password reset: {}", request.getToken());
             throw new InvalidTokenException("Invalid token type");
         }
 
@@ -165,6 +194,8 @@ public class AuthService {
 
         resetToken.setUsed(true);
         tokenRepository.save(resetToken);
+
+        logger.info("Password reset successful for user: {}", user.getEmail());
     }
 
     private Role mapRole(String role) {
