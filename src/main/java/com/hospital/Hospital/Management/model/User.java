@@ -31,6 +31,10 @@ public class User {
     @Column(nullable = false)
     private String fullName;
 
+    private String phoneNumber;
+
+    private String address;
+
     @Enumerated(EnumType.STRING)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))

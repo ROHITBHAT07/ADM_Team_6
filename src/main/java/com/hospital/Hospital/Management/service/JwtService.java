@@ -42,8 +42,17 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         log.info("Generating access token for user: {}", userDetails.getUsername());
-        return generateToken(new HashMap<>(), userDetails);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority()); // 👈 add role to token
+
+        return generateToken(claims, userDetails);
     }
+
+//    public String generateToken(UserDetails userDetails) {
+//        log.info("Generating access token for user: {}", userDetails.getUsername());
+//        return generateToken(new HashMap<>(), userDetails);
+//    }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);

@@ -20,9 +20,9 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
         authService.register(request);
-        return ResponseEntity.ok("User registered successfully. Please check your email for verification.");
+        return ResponseEntity.ok(Map.of("message", "User registered successfully. Please check your email for verification."));
     }
 
     @PostMapping("/authenticate")
