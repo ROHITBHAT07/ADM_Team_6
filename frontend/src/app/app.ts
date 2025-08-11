@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
   RouterOutlet,
   RouterLink,
@@ -7,34 +7,42 @@ import {
 } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
-  template: `
-    <div class="app-container">
-      <nav *ngIf="isLoggedIn" class="main-nav">
-        <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-        <a routerLink="/profile" routerLinkActive="active">Profile</a>
-        <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active"
-          >Admin</a
-        >
-        <button (click)="logout()">Logout</button>
-      </nav>
-      <main>
-        <router-outlet></router-outlet>
-      </main>
-    </div>
-  `,
+  templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {
+export class App implements OnInit, OnDestroy {
   isLoggedIn = false;
   isAdmin = false;
+  private authSubscription: Subscription | null = null;
 
   constructor(private authService: AuthService, private router: Router) {
     this.checkAuthStatus();
+  }
+
+  ngOnInit(): void {
+    this.authSubscription = this.authService.authState$.subscribe(
+      (isAuthenticated) => {
+        this.isLoggedIn = isAuthenticated;
+        if (isAuthenticated) {
+          const user = this.authService.getCurrentUser();
+          this.isAdmin = user?.role === 'ADMIN';
+        } else {
+          this.isAdmin = false;
+        }
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
   }
 
   private checkAuthStatus(): void {

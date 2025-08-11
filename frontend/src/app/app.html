@@ -1,0 +1,11 @@
+<div class="app-container">
+  <nav *ngIf="isLoggedIn" class="main-nav">
+    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/profile" routerLinkActive="active">Profile</a>
+    <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active">Admin</a>
+    <button (click)="logout()">Logout</button>
+  </nav>
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+</div>

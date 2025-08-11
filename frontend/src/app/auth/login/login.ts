@@ -8,35 +8,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
-  template: `
-    <div class="login-container">
-      <h2>Login</h2>
-      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            [(ngModel)]="email"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            [(ngModel)]="password"
-            required
-          />
-        </div>
-        <button type="submit">Login</button>
-      </form>
-      <p>Don't have an account? <a routerLink="/register">Register here</a></p>
-    </div>
-  `,
+  templateUrl: './login.html',
   styleUrls: ['./login.css'],
 })
 export class LoginComponent {
@@ -60,9 +32,7 @@ export class LoginComponent {
         console.log('Login response received:', response);
 
         if (response && response.accessToken) {
-          console.log('Token received, setting in localStorage');
-          localStorage.setItem('token', response.accessToken);
-          console.log('Navigating to dashboard...');
+          console.log('Token received, navigating to dashboard...');
 
           this.router
             .navigate(['/dashboard'])
