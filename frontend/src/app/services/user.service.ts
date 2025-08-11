@@ -3,6 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from '../types/auth.types';
 
+export interface UserProfile {
+  id: number;
+  email: string;
+  fullName: string;
+  phoneNumber: string;
+  address: string;
+  roles: string[];
+  enabled: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -40,4 +50,14 @@ export class UserService {
       passwordData
     );
   }
+
+  getProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.apiUrl}/users/profile`);
+  }
+}
+
+interface ProfileUpdateRequest {
+  fullName: string;
+  phoneNumber: string;
+  address: string;
 }

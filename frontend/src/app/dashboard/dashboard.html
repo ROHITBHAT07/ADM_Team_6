@@ -1,5 +1,15 @@
 <div class="dashboard-container">
-  <h2>Welcome, {{ user?.firstName }}!</h2>
+  <div class="profile-summary">
+    <h2>Welcome!</h2>
+    <div class="user-details" *ngIf="userProfile">
+      <div class="profile-info">
+        <p><strong>Name:</strong> {{ userProfile.fullName }}</p>
+        <p><strong>Email:</strong> {{ userProfile.email }}</p>
+        <p><strong>Phone:</strong> {{ userProfile.phoneNumber }}</p>
+      </div>
+    </div>
+  </div>
+
   <div class="dashboard-content">
     <div class="role-specific-content" *ngIf="user">
       <ng-container [ngSwitch]="user.role">

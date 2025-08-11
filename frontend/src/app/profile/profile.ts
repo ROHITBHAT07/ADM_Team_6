@@ -1,15 +1,21 @@
 import { Component, OnInit } from '@angular/core';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { User } from '../types/auth.types';
+import { UserService } from '../services/user.service';
 import { AuthService } from '../services/auth.service';
+import { User } from '../types/auth.types';
 
 @Component({
   selector: 'app-profile',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
   templateUrl: './profile.html',
   styleUrls: ['./profile.css'],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
 })
 export class ProfileComponent implements OnInit {
   userData: User = {
@@ -24,8 +30,21 @@ export class ProfileComponent implements OnInit {
     newPassword: '',
     confirmPassword: '',
   };
+  profileForm: FormGroup;
+  updateSuccess = false;
+  updateError = '';
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private fb: FormBuilder,
+    private userService: UserService
+  ) {
+    this.profileForm = this.fb.group({
+      fullName: ['', Validators.required],
+      phoneNumber: ['', Validators.required],
+      address: ['', Validators.required],
+    });
+  }
 
   ngOnInit() {
     const currentUser = this.authService.getCurrentUser();
@@ -44,5 +63,20 @@ export class ProfileComponent implements OnInit {
       return;
     }
     // TODO: Implement password change
+  }
+
+  onSubmit() {
+    if (this.profileForm.valid) {
+      this.userService.updateProfile(this.profileForm.value).subscribe({
+        next: (response) => {
+          this.updateSuccess = true;
+          this.updateError = '';
+        },
+        error: (error) => {
+          this.updateSuccess = false;
+          this.updateError = error.error.message || 'Failed to update profile';
+        },
+      });
+    }
   }
 }
